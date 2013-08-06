@@ -278,25 +278,38 @@
 	}
 }
 
+- (void)performBlock:(void (^)(void))block afterDelay:(NSTimeInterval)delay
+{
+    int64_t delta = (int64_t)(1.0e9 * delay);
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, delta), dispatch_get_main_queue(), block);
+}
+
+
 -(void)fakeCommandV
 	/*" +fakeCommandV synthesizes keyboard events for Cmd-v Paste 
-	shortcut. "*/ 
-{     
-    CGEventSourceRef sourceRef = CGEventSourceCreate(kCGEventSourceStateCombinedSessionState);
-    if (!sourceRef)
-    {
-        NSLog(@"No event source");
-        return;
+	shortcut. "*/
+{
+    if ( fakeCommandV_wait != true ) {
+        CGEventSourceRef sourceRef = CGEventSourceCreate(kCGEventSourceStateCombinedSessionState);
+        if (!sourceRef)
+        {
+            NSLog(@"No event source");
+            return;
+        }
+        //9 = "v"
+        CGEventRef eventDown = CGEventCreateKeyboardEvent(sourceRef, (CGKeyCode)9, true);
+        CGEventSetFlags(eventDown, kCGEventFlagMaskCommand|0x000008); // some apps want bit set for one of the command keys
+        CGEventRef eventUp = CGEventCreateKeyboardEvent(sourceRef, (CGKeyCode)9, false);
+        CGEventPost(kCGHIDEventTap, eventDown);
+        CGEventPost(kCGHIDEventTap, eventUp);
+        CFRelease(eventDown);
+        CFRelease(eventUp);
+        CFRelease(sourceRef);
     }
-    //9 = "v"
-    CGEventRef eventDown = CGEventCreateKeyboardEvent(sourceRef, (CGKeyCode)9, true);
-    CGEventSetFlags(eventDown, kCGEventFlagMaskCommand|0x000008); // some apps want bit set for one of the command keys
-    CGEventRef eventUp = CGEventCreateKeyboardEvent(sourceRef, (CGKeyCode)9, false);
-    CGEventPost(kCGHIDEventTap, eventDown);
-    CGEventPost(kCGHIDEventTap, eventUp);
-    CFRelease(eventDown);
-    CFRelease(eventUp);
-    CFRelease(sourceRef);
+    fakeCommandV_wait = true;
+    [self performBlock:^{
+        fakeCommandV_wait = false;
+    } afterDelay:0.3];
 } 
 
 

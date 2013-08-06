@@ -15,6 +15,8 @@
 #import "SGHotKey.h"
 #import "DBSyncPromptDelegate.h"
 
+bool fakeCommandV_wait = false;
+
 @class SGHotKey;
 
 @interface AppController : NSObject {
